@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import SleepScoreGraph from './components/SleepScoreGraph';
 import Login from './components/Login';
+import WebcamCapture from './components/WebcamCapture';
+import SleepReminder from './components/SleepReminder'; // ✅ imported
 import { auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import WebcamCapture from './components/WebcamCapture';
 
 const App = () => {
   const [formData, setFormData] = useState({
@@ -84,9 +85,7 @@ const App = () => {
     return { color: "gray", emoji: "😐" };
   };
 
-  if (!user) {
-    return <Login onSuccess={() => window.location.reload()} />;
-  }
+  if (!user) return <Login onSuccess={() => window.location.reload()} />;
 
   return (
     <div style={{ padding: 20 }}>
@@ -108,11 +107,15 @@ const App = () => {
       <label>Journal Entry:
         <textarea value={formData.journal} onChange={(e) => setFormData({ ...formData, journal: e.target.value })}></textarea>
       </label><br />
+
       <h3>Live Face Capture:</h3>
-<WebcamCapture onCapture={(file) => setImage(file)} />
-
-
+      <WebcamCapture onCapture={(file) => setImage(file)} />
       <button onClick={handleAnalyzeAndLog} style={{ marginTop: 10 }}>Analyze & Save Sleep Log</button>
+
+      <hr />
+
+      {/* ✅ REMINDER COMPONENT */}
+      <SleepReminder user={user} />
 
       <hr />
 

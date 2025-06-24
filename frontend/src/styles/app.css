@@ -36,3 +36,48 @@ button {
 button:hover {
   background-color: #66fcf1;
 }
+
+/* 🌙 Modal Overlay Animation */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+
+  /* Animation start state */
+  opacity: 0;
+  transform: translateY(-30px);
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.modal-overlay.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.modal-content {
+  background-color: #1f2833;
+  color: #c5c6c7;
+  padding: 2rem;
+  border-radius: 10px;
+  text-align: center;
+  max-width: 400px;
+  box-shadow: 0 0 10px #66fcf1;
+  animation: pulse-glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-glow {
+  from {
+    box-shadow: 0 0 10px #66fcf1;
+  }
+  to {
+    box-shadow: 0 0 20px #66fcf1;
+  }
+}

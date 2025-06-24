@@ -1,18 +1,30 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
+import tempfile
+import firebase_admin_init
+
+from firebase_admin import auth as firebase_auth, exceptions
+
 from ml.sleep_model import predict_sleep_score
 from ml.predictor import predict_next_score
-from db.firestore import store_sleep_log, get_sleep_logs
+
+from db.firestore import (
+    store_sleep_log, get_sleep_logs,
+    set_user_sleep_reminder, get_user_sleep_reminder,
+    get_suggested_sleep_time,
+    store_fcm_token, get_fcm_token,
+    send_push_notification
+)
+
 from ai.stress_detector import detect_stress
 from ai.sentiment_analyzer import analyze_sentiment
 from ai.tips_generator import generate_tips
 from ai.routine_recommendor import generate_routine
-import tempfile
-import firebase_admin_init
-from firebase_admin import auth as firebase_auth, exceptions
 
 app = Flask(__name__)
 CORS(app)
+
+# -------------------- 🔐 AUTH --------------------
 
 def verify_token(req):
     auth_header = req.headers.get('Authorization', None)
@@ -24,6 +36,8 @@ def verify_token(req):
         return decoded['uid']
     except (firebase_auth.InvalidIdTokenError, exceptions.FirebaseError):
         return None
+
+# ================== CORE FEATURES ===================
 
 @app.route('/log', methods=['POST'])
 def log_data():
@@ -55,7 +69,6 @@ def log_data():
     tips = generate_tips(data)
 
     data["sleep_score"] = sleep_score
-
     store_sleep_log(user_id, data)
 
     return jsonify({
@@ -116,6 +129,77 @@ def predict():
     logs = request.json.get("logs")
     prediction = predict_next_score(logs)
     return jsonify({"predicted_score": prediction})
+
+# ================== SLEEP REMINDER ROUTES ===================
+
+@app.route('/set_reminder', methods=['POST'])
+def set_reminder():
+    user_id = verify_token(request)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    preferred_time = request.json.get("preferred_sleep_time")
+    if not preferred_time:
+        return jsonify({"error": "preferred_sleep_time is required"}), 400
+
+    set_user_sleep_reminder(user_id, preferred_time)
+
+    token = get_fcm_token(user_id)
+    if token:
+        send_push_notification(token, "Reminder Set ✅", f"Sleep reminder set for {preferred_time}")
+
+    return jsonify({"message": "Reminder time set successfully."})
+
+@app.route('/get_reminder', methods=['GET'])
+def get_reminder():
+    user_id = verify_token(request)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    sleep_time = get_user_sleep_reminder(user_id)
+    return jsonify({"preferred_sleep_time": sleep_time or None})
+
+@app.route('/get_smart_reminder', methods=['GET'])
+def get_smart_reminder():
+    user_id = verify_token(request)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    suggested_time = get_suggested_sleep_time(user_id)
+    return jsonify({"suggested_time": suggested_time or None})
+
+# ================== FCM TOKEN ROUTE ===================
+
+@app.route('/store_fcm_token', methods=['POST'])
+def save_fcm_token():
+    user_id = verify_token(request)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    token = request.json.get("token")
+    if not token:
+        return jsonify({"error": "FCM token required"}), 400
+
+    store_fcm_token(user_id, token)
+    return jsonify({"message": "Token saved successfully."})
+
+# ================== 🔔 Push Trigger Endpoint ===================
+
+@app.route('/trigger_fcm', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def trigger_fcm():
+    user_id = verify_token(request)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    token = get_fcm_token(user_id)
+    if not token:
+        return jsonify({"error": "No FCM token registered"}), 400
+
+    send_push_notification(token, "⏰ Sleep Reminder", "It's time to wind down and sleep well.")
+    return jsonify({"message": "Push notification sent!"})
+
+# ================== RUN APP ===================
 
 if __name__ == '__main__':
     app.run(debug=True)
