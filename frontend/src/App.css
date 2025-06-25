@@ -2,9 +2,10 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
-  text-align: center;
+  /* Remove text-align: center to prevent conflicts */
 }
 
+/* Keep your existing logo and animation styles */
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -39,4 +40,23 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Add this to ensure proper layout */
+.app-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Ensure sections don't have conflicting alignments */
+.app-container section {
+  text-align: left;
+}
+
+/* Keep headers centered */
+.app-container header {
+  text-align: center;
 }

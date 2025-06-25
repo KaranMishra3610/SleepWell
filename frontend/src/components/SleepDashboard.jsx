@@ -1,6 +1,8 @@
+// src/components/SleepDashboard.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
 import SleepScoreGraph from './SleepScoreGraph';
+import { Link } from 'react-router-dom'; // ✅
 
 function SleepDashboard() {
   const [data, setData] = useState({
@@ -27,6 +29,12 @@ function SleepDashboard() {
       <button onClick={handlePredict}>Get Sleep Score</button>
       {score && <p>Your Sleep Score: {score}</p>}
       <SleepScoreGraph value={score} />
+
+      <hr />
+      {/* ✅ Link to Sleep Aids */}
+      <Link to="/sleep-aids">
+        🎵 Try Sleep Aids
+      </Link>
     </div>
   );
 }

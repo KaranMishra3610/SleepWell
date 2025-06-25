@@ -1,3 +1,4 @@
+// src/components/SleepReminder.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { auth, messaging } from '../firebase';
@@ -13,7 +14,7 @@ const SleepReminder = ({ user }) => {
   const lastAlertRef = useRef(null);
   const VAPID_KEY = import.meta.env.VITE_VAPID_KEY;
 
-  // 🔄 Fetch reminder + smart suggestion
+  // Fetch saved and suggested reminder times
   useEffect(() => {
     if (!user) return;
 
@@ -36,8 +37,8 @@ const SleepReminder = ({ user }) => {
         if (res.data?.suggested_time) {
           setSuggestedTime(res.data.suggested_time);
         }
-      } catch (err) {
-        console.warn("ℹ️ Smart suggestion not available.");
+      } catch {
+        console.warn("Smart suggestion not available.");
       }
     };
 
@@ -45,17 +46,14 @@ const SleepReminder = ({ user }) => {
     fetchSuggestion();
   }, [user]);
 
-  // ✅ FCM token registration with explicit service worker
+  // Register device for push notifications
   useEffect(() => {
     if (!user || !VAPID_KEY) return;
 
     const registerFCMToken = async () => {
       try {
         const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-          console.warn("🔒 Notification permission denied.");
-          return;
-        }
+        if (permission !== 'granted') return;
 
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
         const token = await getToken(messaging, {
@@ -63,62 +61,52 @@ const SleepReminder = ({ user }) => {
           serviceWorkerRegistration: registration
         });
 
-        if (!token) {
-          console.warn("❌ No FCM token received.");
-          return;
-        }
+        if (!token) return;
 
         const idToken = await auth.currentUser.getIdToken();
-        await axios.post('http://127.0.0.1:5000/store_fcm_token', {
-          token
-        }, {
+        await axios.post('http://127.0.0.1:5000/store_fcm_token', { token }, {
           headers: { Authorization: `Bearer ${idToken}` }
         });
 
-        console.log("✅ FCM token sent to backend.");
+        console.log("FCM token registered.");
       } catch (err) {
-        console.error("❌ Error getting/sending FCM token:", err.message);
+        console.error("FCM error:", err.message);
       }
     };
 
     registerFCMToken();
   }, [user, VAPID_KEY]);
 
-  // 🧠 Detect user click to enable sound
+  // Detect first user click (required for audio play)
   useEffect(() => {
     const markInteracted = () => setUserInteracted(true);
     window.addEventListener('click', markInteracted, { once: true });
     return () => window.removeEventListener('click', markInteracted);
   }, []);
 
-  // ⏰ Trigger local + push reminder
+  // Trigger reminders
   useEffect(() => {
     if (!preferredTime || !userInteracted) return;
 
     const interval = setInterval(async () => {
       const now = new Date();
       const [h, m] = preferredTime.split(':').map(Number);
-      const isTimeMatch = now.getHours() === h && now.getMinutes() === m;
-      const lastAlert = lastAlertRef.current;
+      const isMatch = now.getHours() === h && now.getMinutes() === m;
+      const last = lastAlertRef.current;
 
-      if (isTimeMatch && (!lastAlert || now - lastAlert > 60000)) {
-        // 🔊 Sound
-        audioRef.current?.play().catch(err => {
-          console.warn("🔇 Audio blocked:", err.message);
-        });
-
-        // 🌙 Modal
+      if (isMatch && (!last || now - last > 60000)) {
+        // Play sound
+        audioRef.current?.play().catch(err => console.warn("Audio blocked:", err.message));
         setShowModal(true);
 
-        // 📬 Push
+        // Push notification
         try {
           const idToken = await auth.currentUser.getIdToken();
           await axios.post("http://127.0.0.1:5000/trigger_fcm", {}, {
             headers: { Authorization: `Bearer ${idToken}` }
           });
-          console.log("✅ FCM push triggered.");
         } catch (err) {
-          console.error("❌ Push trigger failed:", err.message);
+          console.error("Push trigger failed:", err.message);
         }
 
         lastAlertRef.current = new Date();
@@ -128,7 +116,6 @@ const SleepReminder = ({ user }) => {
     return () => clearInterval(interval);
   }, [preferredTime, userInteracted]);
 
-  // 💾 Save preferred time
   const saveReminder = async () => {
     const idToken = await auth.currentUser.getIdToken();
     await axios.post('http://127.0.0.1:5000/set_reminder', {
@@ -140,36 +127,36 @@ const SleepReminder = ({ user }) => {
   };
 
   return (
-    <div className="card">
-      <h3>Sleep Reminder:</h3>
-      <label>
-        Set Reminder Time:
+    <div className="reminder-card">
+      <h3>⏰ <strong>Sleep Reminder</strong></h3>
+
+      <div className="form-group">
+        <label htmlFor="time">Set Reminder Time:</label>
         <input
+          id="time"
           type="time"
           value={preferredTime}
           onChange={(e) => setPreferredTime(e.target.value)}
         />
-        <button onClick={saveReminder} style={{ marginLeft: 10 }}>
-          Save Reminder
-        </button>
-      </label>
+        <button onClick={saveReminder}>💾 Save Reminder</button>
+      </div>
 
       {suggestedTime && (
-        <div style={{ marginTop: 10 }}>
+        <div className="form-group">
           <button onClick={() => setPreferredTime(suggestedTime)}>
             💡 Use Smart Suggestion ({suggestedTime})
           </button>
         </div>
       )}
 
-      <div style={{ marginTop: '10px' }}>
-        <button onClick={() => audioRef.current?.play()}>🔊 Test Sound</button>
+      <div className="form-group">
+        <button onClick={() => audioRef.current?.play()}>
+          🔊 Test Sound
+        </button>
       </div>
 
-      {/* 🔊 Audio */}
       <audio ref={audioRef} src={reminderSound} preload="auto" />
 
-      {/* 🌙 Modal */}
       {showModal && (
         <div className="modal-overlay show">
           <div className="modal-content">
@@ -182,6 +169,77 @@ const SleepReminder = ({ user }) => {
           </div>
         </div>
       )}
+
+      {/* Inline scoped styling */}
+      <style>{`
+        .reminder-card {
+          background: #e3f2fd;
+          padding: 24px;
+          border-radius: 12px;
+          text-align: center;
+        }
+
+        h3 {
+          color: #0d47a1;
+          font-size: 1.6rem;
+          margin-bottom: 16px;
+        }
+
+        .form-group {
+          margin-top: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          align-items: center;
+        }
+
+        label {
+          font-weight: 600;
+          margin-bottom: 5px;
+        }
+
+        input[type="time"] {
+          padding: 10px;
+          font-size: 1rem;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+        }
+
+        button {
+          padding: 10px 20px;
+          font-size: 1rem;
+          background-color: #1976d2;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: background 0.2s ease-in-out;
+        }
+
+        button:hover {
+          background-color: #1565c0;
+        }
+
+        .modal-overlay {
+          position: fixed;
+          top: 0; left: 0;
+          width: 100%; height: 100%;
+          background-color: rgba(0,0,0,0.7);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+        }
+
+        .modal-content {
+          background: white;
+          padding: 30px;
+          border-radius: 12px;
+          text-align: center;
+          max-width: 90%;
+          width: 400px;
+        }
+      `}</style>
     </div>
   );
 };

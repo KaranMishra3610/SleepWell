@@ -13,7 +13,9 @@ from db.firestore import (
     set_user_sleep_reminder, get_user_sleep_reminder,
     get_suggested_sleep_time,
     store_fcm_token, get_fcm_token,
-    send_push_notification
+    send_push_notification,
+    get_streak,                # ✅ For streak
+    get_user_badges            # ✅ For badges
 )
 
 from ai.stress_detector import detect_stress
@@ -168,7 +170,7 @@ def get_smart_reminder():
     suggested_time = get_suggested_sleep_time(user_id)
     return jsonify({"suggested_time": suggested_time or None})
 
-# ================== FCM TOKEN ROUTE ===================
+# ================== 🔔 FCM SUPPORT ===================
 
 @app.route('/store_fcm_token', methods=['POST'])
 def save_fcm_token():
@@ -183,8 +185,6 @@ def save_fcm_token():
     store_fcm_token(user_id, token)
     return jsonify({"message": "Token saved successfully."})
 
-# ================== 🔔 Push Trigger Endpoint ===================
-
 @app.route('/trigger_fcm', methods=['POST', 'OPTIONS'])
 @cross_origin()
 def trigger_fcm():
@@ -198,6 +198,28 @@ def trigger_fcm():
 
     send_push_notification(token, "⏰ Sleep Reminder", "It's time to wind down and sleep well.")
     return jsonify({"message": "Push notification sent!"})
+
+# ================== 🔥 STREAK TRACKING ===================
+
+@app.route('/get_streak', methods=['GET'])
+def fetch_streak():
+    user_id = verify_token(request)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    streak = get_streak(user_id)
+    return jsonify({"streak": streak})
+
+# ================== 🏅 BADGE SYSTEM ===================
+
+@app.route('/get_badges', methods=['GET'])
+def fetch_badges():
+    user_id = verify_token(request)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    badges = get_user_badges(user_id)
+    return jsonify({"badges": badges or []})
 
 # ================== RUN APP ===================
 

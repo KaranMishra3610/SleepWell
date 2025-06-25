@@ -1,81 +1,115 @@
+// src/App.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import SleepScoreGraph from './components/SleepScoreGraph';
-import Login from './components/Login';
-import WebcamCapture from './components/WebcamCapture';
-import SleepReminder from './components/SleepReminder'; // ✅ imported
 import { auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
-const App = () => {
-  const [formData, setFormData] = useState({
-    hours_slept: '',
-    mood: '',
-    caffeine: '',
-    screen_time: '',
-    journal: ''
-  });
+import Login from './components/Login.jsx';
+import UserStats from './components/UserStats';
+import UserStatsDetailed from './components/UserStatsDetailed';
+import SleepLogger from './components/SleepLogger';
+import AnalysisResults from './components/AnalysisResults';
+import SleepScoreGraph from './components/SleepScoreGraph.jsx';
+import SleepReminder from './components/SleepReminder.jsx';
+import SleepAids from './components/SleepAids.jsx';
+import MemoryCalm from './components/MiniGames/MemoryCalm';
 
-  const [image, setImage] = useState(null);
-  const [results, setResults] = useState({});
-  const [sleepHistory, setSleepHistory] = useState([]);
+const App = () => {
   const [user, setUser] = useState(null);
+  const [sleepHistory, setSleepHistory] = useState([]);
+  const [results, setResults] = useState({});
+  const [streak, setStreak] = useState(0);
+  const [badges, setBadges] = useState([]);
 
   useEffect(() => {
     onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        fetchSleepHistory();
+        await initializeUserData();
       }
     });
   }, []);
 
-  const handleAnalyzeAndLog = async () => {
-    if (!user || !image || !formData.journal) {
-      alert("Please provide a journal entry and an image for analysis.");
-      return;
-    }
-
+  const initializeUserData = async () => {
     try {
+      await Promise.all([
+        fetchSleepHistory(),
+        fetchStreak(),
+        fetchBadges()
+      ]);
+    } catch (error) {
+      console.error("Initialization failed:", error);
+    }
+  };
+
+  const apiService = {
+    async getAuthHeaders() {
       const idToken = await auth.currentUser.getIdToken();
-      const form = new FormData();
-
-      Object.entries({
-        ...formData,
-        hours_slept: Number(formData.hours_slept),
-        caffeine: Number(formData.caffeine),
-        screen_time: Number(formData.screen_time)
-      }).forEach(([key, value]) => form.append(key, value));
-
-      form.append("image", image);
-
-      const res = await axios.post('http://127.0.0.1:5000/log', form, {
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "multipart/form-data"
-        }
-      });
-
-      setResults(res.data);
-      fetchSleepHistory();
-    } catch (err) {
-      console.error("Failed to analyze or log data", err);
-      alert("Analysis failed. Make sure all inputs are valid.");
+      return { Authorization: `Bearer ${idToken}` };
+    },
+    async fetchData(endpoint) {
+      const headers = await this.getAuthHeaders();
+      const res = await axios.get(`http://127.0.0.1:5000${endpoint}`, { headers });
+      return res.data;
+    },
+    async postData(endpoint, data, isFormData = false) {
+      const headers = await this.getAuthHeaders();
+      if (isFormData) headers['Content-Type'] = 'multipart/form-data';
+      const res = await axios.post(`http://127.0.0.1:5000${endpoint}`, data, { headers });
+      return res.data;
     }
   };
 
   const fetchSleepHistory = async () => {
-    if (!user) return;
     try {
-      const idToken = await auth.currentUser.getIdToken();
-      const res = await axios.get('http://127.0.0.1:5000/history', {
-        headers: {
-          Authorization: `Bearer ${idToken}`
-        }
-      });
-      setSleepHistory(res.data);
+      const data = await apiService.fetchData('/history');
+      setSleepHistory(data);
     } catch (err) {
-      console.error("Failed to fetch history", err);
+      console.error("Failed to fetch sleep history:", err);
+    }
+  };
+
+  const fetchStreak = async () => {
+    try {
+      const data = await apiService.fetchData('/get_streak');
+      setStreak(data.streak || 0);
+    } catch (err) {
+      console.error("Failed to fetch streak:", err);
+    }
+  };
+
+  const fetchBadges = async () => {
+    try {
+      const data = await apiService.fetchData('/get_badges');
+      setBadges(data.badges || []);
+    } catch (err) {
+      console.error("Failed to fetch badges:", err);
+    }
+  };
+
+  const handleSleepAnalysis = async (formData, image) => {
+    if (!user || !image || !formData.journal) {
+      alert("Please provide journal entry and image.");
+      return;
+    }
+
+    try {
+      const form = new FormData();
+      const processed = {
+        ...formData,
+        hours_slept: +formData.hours_slept,
+        caffeine: +formData.caffeine,
+        screen_time: +formData.screen_time
+      };
+      Object.entries(processed).forEach(([k, v]) => form.append(k, v));
+      form.append('image', image);
+
+      const data = await apiService.postData('/log', form, true);
+      setResults(data);
+      await initializeUserData();
+    } catch (err) {
+      console.error("Sleep analysis failed:", err);
+      alert("Analysis failed. Please check inputs.");
     }
   };
 
@@ -88,86 +122,87 @@ const App = () => {
   if (!user) return <Login onSuccess={() => window.location.reload()} />;
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>Sleep Wellness Dashboard</h1>
+    <div className="app-container" style={{ padding: 20, maxWidth: 1200, margin: '0 auto' }}>
+      <header style={{ textAlign: 'center', marginBottom: 30 }}>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#2c3e50' }}>
+          Sleep Wellness Dashboard
+        </h1>
+      </header>
 
-      {/* INPUT FORM */}
-      <label>Hours Slept:
-        <input type="number" value={formData.hours_slept} onChange={(e) => setFormData({ ...formData, hours_slept: e.target.value })} />
-      </label><br />
-      <label>Screen Time (hrs):
-        <input type="number" value={formData.screen_time} onChange={(e) => setFormData({ ...formData, screen_time: e.target.value })} />
-      </label><br />
-      <label>Caffeine Intake:
-        <input type="number" value={formData.caffeine} onChange={(e) => setFormData({ ...formData, caffeine: e.target.value })} />
-      </label><br />
-      <label>Mood:
-        <input type="text" value={formData.mood} onChange={(e) => setFormData({ ...formData, mood: e.target.value })} />
-      </label><br />
-      <label>Journal Entry:
-        <textarea value={formData.journal} onChange={(e) => setFormData({ ...formData, journal: e.target.value })}></textarea>
-      </label><br />
+      <section style={{ marginBottom: 30 }}>
+        <UserStats streak={streak} badges={badges} />
+        {sleepHistory.length > 0 && <UserStatsDetailed history={sleepHistory} />}
+      </section>
 
-      <h3>Live Face Capture:</h3>
-      <WebcamCapture onCapture={(file) => setImage(file)} />
-      <button onClick={handleAnalyzeAndLog} style={{ marginTop: 10 }}>Analyze & Save Sleep Log</button>
+      <section style={{ marginBottom: 30 }}>
+        <div style={{
+          backgroundColor: '#f8f9fa',
+          padding: 25,
+          borderRadius: 12,
+          border: '1px solid #e9ecef'
+        }}>
+          <h2 style={{ marginBottom: 20, color: '#495057' }}>📝 Log Your Sleep</h2>
+          <SleepLogger onAnalyze={handleSleepAnalysis} />
+        </div>
+      </section>
 
-      <hr />
-
-      {/* ✅ REMINDER COMPONENT */}
-      <SleepReminder user={user} />
-
-      <hr />
-
-      {/* GRAPH & RESULTS */}
-      {sleepHistory.length > 0 && <SleepScoreGraph history={sleepHistory} />}
-
-      {results.tips && (
-        <>
-          <h3>Sleep Tips:</h3>
-          <ul>{results.tips.map((tip, idx) => <li key={idx}>{tip}</li>)}</ul>
-        </>
+      {Object.keys(results).length > 0 && (
+        <section style={{ marginBottom: 30 }}>
+          <AnalysisResults results={results} getSentimentStyle={getSentimentStyle} />
+        </section>
       )}
 
-      {results.routine && (
-        <>
-          <h3>Recommended Routine:</h3>
-          <p>{results.routine}</p>
-        </>
+      {sleepHistory.length > 0 && (
+        <section style={{ marginBottom: 30 }}>
+          <div style={{
+            backgroundColor: '#fff',
+            padding: 25,
+            borderRadius: 12,
+            border: '1px solid #e9ecef',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            <h2 style={{ marginBottom: 20, color: '#495057' }}>📊 Sleep Trends</h2>
+            <SleepScoreGraph history={sleepHistory} />
+          </div>
+        </section>
       )}
 
-      {results.sentiment && (
-        <>
-          <h3>Sentiment Analysis:</h3>
-          <p>
-            Mood:{" "}
-            <strong style={{ color: getSentimentStyle(results.sentiment.polarity).color }}>
-              {results.sentiment.mood} {getSentimentStyle(results.sentiment.polarity).emoji}
-            </strong>{" "}
-            (Polarity: {results.sentiment.polarity.toFixed(2)})
-          </p>
-        </>
-      )}
+      <section style={{ marginBottom: 30 }}>
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 20,
+          justifyContent: 'space-between'
+        }}>
+          <div style={{
+            backgroundColor: '#e3f2fd',
+            padding: 20,
+            borderRadius: 12,
+            flex: '1 1 48%'
+          }}>
+            <SleepReminder user={user} />
+          </div>
+          <div style={{
+            backgroundColor: '#f3e5f5',
+            padding: 20,
+            borderRadius: 12,
+            flex: '1 1 48%'
+          }}>
+            <SleepAids />
+          </div>
+        </div>
+      </section>
 
-      {results.emotion && (
-        <>
-          <h3>Detected Emotion:</h3>
-          <p>{results.emotion}</p>
-        </>
-      )}
-
-      {(results.stress_level_numeric !== undefined && results.stress_level_label) && (
-        <>
-          <h3>Detected Stress Level:</h3>
-          <p>
-            {results.stress_level_numeric.toFixed(1)} / 10 – <strong>{results.stress_level_label}</strong>
-          </p>
-        </>
-      )}
-
-      <hr />
-      <h3>Raw Results:</h3>
-      <pre>{JSON.stringify(results, null, 2)}</pre>
+      <section>
+        <div style={{
+          backgroundColor: '#e8f5e9',
+          padding: 25,
+          borderRadius: 12
+        }}>
+          <h2 style={{ marginBottom: 20, color: '#2e7d32' }}>🧠 Relax with Memory Calm</h2>
+          <MemoryCalm />
+        </div>
+      </section>
     </div>
   );
 };
