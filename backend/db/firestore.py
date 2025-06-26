@@ -13,6 +13,7 @@ db = firestore.client()
 
 def store_sleep_log(user_id, data):
     log = {
+        "user_id": user_id,  # ✅ Store user ID in each log entry (fix for insights)
         "hours_slept": float(data.get("hours_slept", 0)),
         "caffeine": float(data.get("caffeine", 0)),
         "screen_time": float(data.get("screen_time", 0)),
@@ -23,6 +24,7 @@ def store_sleep_log(user_id, data):
     }
     if "sleep_score" in data:
         log["sleep_score"] = float(data["sleep_score"])
+
     db.collection('sleep_logs').document(user_id).collection('entries').add(log)
 
     update_streak(user_id)
@@ -79,7 +81,7 @@ def update_streak(user_id):
         "current_streak": streak
     }, merge=True)
 
-def get_streak(user_id):  # ✅ RESTORED MISSING FUNCTION
+def get_streak(user_id):
     doc = db.collection("users").document(user_id).get()
     if doc.exists:
         return doc.to_dict().get("current_streak", 0)

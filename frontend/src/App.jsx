@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { auth } from './firebase';
@@ -13,6 +12,8 @@ import SleepScoreGraph from './components/SleepScoreGraph.jsx';
 import SleepReminder from './components/SleepReminder.jsx';
 import SleepAids from './components/SleepAids.jsx';
 import MemoryCalm from './components/MiniGames/MemoryCalm';
+import RoutineAdvisor from './components/RoutineAdvisor.jsx';
+import ComparativeInsights from './components/ComparativeInsights.jsx'; // 🧠
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -20,27 +21,25 @@ const App = () => {
   const [results, setResults] = useState({});
   const [streak, setStreak] = useState(0);
   const [badges, setBadges] = useState([]);
+  const [insights, setInsights] = useState([]); // 🧠
 
   useEffect(() => {
     onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
       if (currentUser) {
-        await initializeUserData();
+        setUser(currentUser);
+        try {
+          await Promise.all([
+            fetchSleepHistory(),
+            fetchStreak(),
+            fetchBadges(),
+            fetchComparativeInsights(currentUser.uid) // ✅ pass UID here
+          ]);
+        } catch (error) {
+          console.error("Initialization failed:", error);
+        }
       }
     });
   }, []);
-
-  const initializeUserData = async () => {
-    try {
-      await Promise.all([
-        fetchSleepHistory(),
-        fetchStreak(),
-        fetchBadges()
-      ]);
-    } catch (error) {
-      console.error("Initialization failed:", error);
-    }
-  };
 
   const apiService = {
     async getAuthHeaders() {
@@ -87,6 +86,15 @@ const App = () => {
     }
   };
 
+  const fetchComparativeInsights = async (uid) => {
+    try {
+      const data = await apiService.fetchData(`/get_insights?user_id=${uid}`);
+      setInsights(data.insights || []);
+    } catch (err) {
+      console.error("Failed to fetch comparative insights:", err);
+    }
+  };
+
   const handleSleepAnalysis = async (formData, image) => {
     if (!user || !image || !formData.journal) {
       alert("Please provide journal entry and image.");
@@ -106,7 +114,12 @@ const App = () => {
 
       const data = await apiService.postData('/log', form, true);
       setResults(data);
-      await initializeUserData();
+      await Promise.all([
+        fetchSleepHistory(),
+        fetchStreak(),
+        fetchBadges(),
+        fetchComparativeInsights(user.uid)
+      ]);
     } catch (err) {
       console.error("Sleep analysis failed:", err);
       alert("Analysis failed. Please check inputs.");
@@ -169,27 +182,25 @@ const App = () => {
 
       <section style={{ marginBottom: 30 }}>
         <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 20,
-          justifyContent: 'space-between'
+          backgroundColor: '#e3f2fd',
+          padding: 20,
+          borderRadius: 12,
+          marginBottom: 20
         }}>
-          <div style={{
-            backgroundColor: '#e3f2fd',
-            padding: 20,
-            borderRadius: 12,
-            flex: '1 1 48%'
-          }}>
-            <SleepReminder user={user} />
-          </div>
-          <div style={{
-            backgroundColor: '#f3e5f5',
-            padding: 20,
-            borderRadius: 12,
-            flex: '1 1 48%'
-          }}>
-            <SleepAids />
-          </div>
+          <h2 style={{ marginBottom: 15, color: '#1565c0' }}>🧠 Your Sleep Insights</h2>
+          <ComparativeInsights insights={insights} />
+        </div>
+      </section>
+
+      <section style={{ marginBottom: 30 }}>
+        <div style={{
+          backgroundColor: '#fff3e0',
+          padding: 25,
+          borderRadius: 12,
+          border: '1px solid #ffe0b2'
+        }}>
+          <h2 style={{ marginBottom: 20, color: '#ef6c00' }}>🛏️ Optimize Your Sleep Routine</h2>
+          <RoutineAdvisor />
         </div>
       </section>
 

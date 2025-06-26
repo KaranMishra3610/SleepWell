@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 import tempfile
 import firebase_admin_init
-
+from ai.routine_recommendor import generate_custom_routine_tip
 from firebase_admin import auth as firebase_auth, exceptions
 
 from ml.sleep_model import predict_sleep_score
@@ -14,14 +14,15 @@ from db.firestore import (
     get_suggested_sleep_time,
     store_fcm_token, get_fcm_token,
     send_push_notification,
-    get_streak,                # ✅ For streak
-    get_user_badges            # ✅ For badges
+    get_streak, get_user_badges
 )
 
 from ai.stress_detector import detect_stress
 from ai.sentiment_analyzer import analyze_sentiment
 from ai.tips_generator import generate_tips
-from ai.routine_recommendor import generate_routine
+
+# 🧠 Import insights blueprint
+from routes.insights import insights_bp
 
 app = Flask(__name__)
 CORS(app)
@@ -220,6 +221,20 @@ def fetch_badges():
 
     badges = get_user_badges(user_id)
     return jsonify({"badges": badges or []})
+
+@app.route('/routine_tip', methods=['POST'])
+def routine_tip():
+    user_id = verify_token(request)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.json
+    tip = generate_custom_routine_tip(data)
+    return jsonify({"tip": tip})
+
+# ================== 💡 REGISTER BLUEPRINTS ===================
+
+app.register_blueprint(insights_bp)
 
 # ================== RUN APP ===================
 

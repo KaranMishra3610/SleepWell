@@ -5,24 +5,31 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 60px);
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 15px;
   justify-content: center;
   margin-top: 10px;
+  padding: 10px 0;
 }
 
 .card {
   width: 60px;
   height: 60px;
-  background-color: #f0f8ff;
+  background-color: #ffffff;
   font-size: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: 8px;
-  transition: background-color 0.3s ease;
-  box-shadow: 1px 1px 5px rgba(0,0,0,0.1);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  user-select: none;
+  text-align: center;
+  border: 2px solid #b0bec5;
+}
+
+.card:hover {
+  background-color: #e1f5fe;
 }
 
 .card.flipped {
@@ -30,8 +37,12 @@
 }
 
 .complete {
-  margin-top: 15px;
+  margin-top: 20px;
   font-weight: bold;
-  color: green;
-  font-size: 1.2rem;
+  color: #2e7d32;
+  background-color: #c8e6c9;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  display: inline-block;
 }
