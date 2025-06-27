@@ -13,7 +13,7 @@ db = firestore.client()
 
 def store_sleep_log(user_id, data):
     log = {
-        "user_id": user_id,  # ✅ Store user ID in each log entry (fix for insights)
+        "user_id": user_id,
         "hours_slept": float(data.get("hours_slept", 0)),
         "caffeine": float(data.get("caffeine", 0)),
         "screen_time": float(data.get("screen_time", 0)),
@@ -22,6 +22,12 @@ def store_sleep_log(user_id, data):
         "journal": data.get("journal", ""),
         "timestamp": datetime.utcnow().isoformat()
     }
+
+    # Routine-related fields (store in lowercase for consistency)
+    for key in ["wakeUp", "screenTime", "caffeineTime", "workoutTime", "lateMeal"]:
+        if key in data:
+            log[key.lower()] = data[key]
+
     if "sleep_score" in data:
         log["sleep_score"] = float(data["sleep_score"])
 
@@ -67,7 +73,6 @@ def update_streak(user_id):
     if not dates:
         return
 
-    # Remove duplicates, sort descending
     dates = sorted(list(set(dates)), reverse=True)
 
     streak = 1
@@ -96,18 +101,15 @@ def evaluate_and_award_badges(user_id):
     logs = [doc.to_dict() for doc in logs_ref.stream()]
     badges = set()
 
-    # 1. Streak badges
     current_streak = get_streak(user_id)
     if current_streak >= 3:
         badges.add("3-Day Streak Champ")
     if current_streak >= 7:
         badges.add("Weekly Streak Hero")
 
-    # 2. Log count badge
     if len(logs) >= 5:
         badges.add("Consistent Logger")
 
-    # 3. High quality sleep badge
     for log in logs:
         if float(log.get("hours_slept", 0)) >= 8:
             badges.add("Full 8 Hours Achiever")
@@ -182,4 +184,57 @@ def send_push_notification(token, title, body):
         token=token
     )
     response = messaging.send(message)
-    print("✅ Push sent:", response)
+
+# -------------------------
+# 🎙 Voice Journal Support
+# -------------------------
+
+def store_voice_journal(user_id, transcript_text, metadata=None):
+    doc = {
+        "text": transcript_text,
+        "timestamp": firestore.SERVER_TIMESTAMP,
+    }
+    if metadata:
+        doc.update(metadata)
+
+    db.collection("voice_journals").document(user_id).collection("entries").add(doc)
+
+# -------------------------
+# 🤖 Routine Optimization Agent Support
+# -------------------------
+
+def get_user_routine_history(user_id, limit=10):
+    """
+    Fetch recent routine inputs (screen time, caffeine time, etc.) for AI agent.
+    """
+    entries = db.collection("sleep_logs").document(user_id).collection("entries") \
+        .order_by("timestamp", direction=firestore.Query.DESCENDING).limit(limit).stream()
+
+    history = []
+    for doc in entries:
+        d = doc.to_dict()
+        history.append({
+            "wake_up": d.get("wake_up", ""),
+            "screen_time": d.get("screen_time", ""),
+            "caffeine_time": d.get("caffeine_time", ""),
+            "workout_time": d.get("workout_time", ""),
+            "late_meal": d.get("late_meal", ""),
+            "sleep_score": d.get("sleep_score", None),
+            "hours_slept": d.get("hours_slept", None),
+            "timestamp": d.get("timestamp", "")
+        })
+
+    return history
+
+def store_generated_routine(user_id, routine):
+    db.collection("users").document(user_id).collection("routines").add({
+        "routine": routine,
+        "timestamp": firestore.SERVER_TIMESTAMP
+    })
+
+def get_latest_generated_routine(user_id):
+    docs = db.collection("users").document(user_id).collection("routines") \
+        .order_by("timestamp", direction=firestore.Query.DESCENDING).limit(1).stream()
+    for doc in docs:
+        return doc.to_dict().get("routine")
+    return None

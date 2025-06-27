@@ -12,8 +12,9 @@ import SleepScoreGraph from './components/SleepScoreGraph.jsx';
 import SleepReminder from './components/SleepReminder.jsx';
 import SleepAids from './components/SleepAids.jsx';
 import MemoryCalm from './components/MiniGames/MemoryCalm';
-import RoutineAdvisor from './components/RoutineAdvisor.jsx';
-import ComparativeInsights from './components/ComparativeInsights.jsx'; // 🧠
+import ComparativeInsights from './components/ComparativeInsights.jsx';
+import VoiceJournal from './components/VoiceJournal.jsx';
+import RoutineAdvisor from './components/RoutineAdvisor.jsx'; // ✅ Restored this
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -21,7 +22,8 @@ const App = () => {
   const [results, setResults] = useState({});
   const [streak, setStreak] = useState(0);
   const [badges, setBadges] = useState([]);
-  const [insights, setInsights] = useState([]); // 🧠
+  const [insights, setInsights] = useState([]);
+  const [voiceTranscript, setVoiceTranscript] = useState("");
 
   useEffect(() => {
     onAuthStateChanged(auth, async (currentUser) => {
@@ -32,7 +34,7 @@ const App = () => {
             fetchSleepHistory(),
             fetchStreak(),
             fetchBadges(),
-            fetchComparativeInsights(currentUser.uid) // ✅ pass UID here
+            fetchComparativeInsights(currentUser.uid)
           ]);
         } catch (error) {
           console.error("Initialization failed:", error);
@@ -149,6 +151,18 @@ const App = () => {
 
       <section style={{ marginBottom: 30 }}>
         <div style={{
+          backgroundColor: '#f3e5f5',
+          padding: 25,
+          borderRadius: 12,
+          border: '1px solid #d1c4e9'
+        }}>
+          <h2 style={{ marginBottom: 20, color: '#6a1b9a' }}>🎤 Voice Journal</h2>
+          <VoiceJournal onTranscription={setVoiceTranscript} />
+        </div>
+      </section>
+
+      <section style={{ marginBottom: 30 }}>
+        <div style={{
           backgroundColor: '#f8f9fa',
           padding: 25,
           borderRadius: 12,
@@ -194,12 +208,11 @@ const App = () => {
 
       <section style={{ marginBottom: 30 }}>
         <div style={{
-          backgroundColor: '#fff3e0',
+          backgroundColor: '#f1f8e9',
           padding: 25,
           borderRadius: 12,
-          border: '1px solid #ffe0b2'
+          border: '1px solid #c5e1a5'
         }}>
-          <h2 style={{ marginBottom: 20, color: '#ef6c00' }}>🛏️ Optimize Your Sleep Routine</h2>
           <RoutineAdvisor />
         </div>
       </section>
