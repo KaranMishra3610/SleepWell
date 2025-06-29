@@ -4,3 +4,14 @@ firebase-admin
 joblib
 scikit-learn
 pandas
+gunicorn           # production WSGI server
+requests           # often needed for external APIs or Firebase token validation
+numpy              # used under the hood by pandas/sklearn
+transformers
+torch
+os
+datetime
+dotenv
+random
+deepface
+whisper
