@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { getFcmToken } from './utils/setupFCMToken'; // adjust the path if needed
 
 import Login from './components/Login.jsx';
 import CompanionsHub from './components/CompanionsHub.jsx';
@@ -34,28 +35,33 @@ const App = () => {
   const [userToken, setUserToken] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        // Get the user token for API calls
-        const token = await currentUser.getIdToken();
-        setUserToken(token);
-        try {
-          await Promise.all([
-            fetchSleepHistory(),
-            fetchStreak(),
-            fetchBadges(),
-            fetchComparativeInsights(currentUser.uid)
-          ]);
-        } catch (error) {
-          console.error("Initialization failed:", error);
-        }
-      }
-      setLoading(false);
-    });
+  const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    if (currentUser) {
+      setUser(currentUser);
 
-    return () => unsubscribe();
-  }, []);
+      // ✅ 1. Setup Firebase Cloud Messaging Token
+     await getFcmToken(currentUser.uid);// <<--- ADD THIS LINE
+
+      // ✅ 2. Get the ID token for API usage
+      const token = await currentUser.getIdToken();
+      setUserToken(token);
+
+      try {
+        await Promise.all([
+          fetchSleepHistory(),
+          fetchStreak(),
+          fetchBadges(),
+          fetchComparativeInsights(currentUser.uid)
+        ]);
+      } catch (error) {
+        console.error("Initialization failed:", error);
+      }
+    }
+    setLoading(false);
+  });
+
+  return () => unsubscribe();
+}, []);
 
   const apiService = {
     async getAuthHeaders() {

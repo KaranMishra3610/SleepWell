@@ -29,7 +29,10 @@ from ai.voice_transcriber import transcribe_audio
 from routes.insights import insights_bp
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/*": {"origins": [
+    "http://localhost:5173",
+    "https://effulgent-sundae-e24053.netlify.app"
+]}})
 
 
 # ------------------ AUTH ------------------ #

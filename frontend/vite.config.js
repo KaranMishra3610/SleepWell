@@ -7,18 +7,23 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.png'], // ensure your icon is in public/icon.png
+      includeAssets: ['icon.png'],
       manifest: {
         name: 'Sleep Wellness App',
         short_name: 'SleepApp',
-        description: 'A calming PWA for better sleep with AI bedtime stories and routines.',
-        theme_color: '#1e1e2f',
-        background_color: '#ffffff',
+        description: 'Sleep tracking, bedtime stories, and wellness tools',
+        theme_color: '#0d1117',
+        background_color: '#0d1117',
         display: 'standalone',
         start_url: '/',
         icons: [
           {
-            src: 'icon.png',
+            src: '/icon.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: '/icon.png',
             sizes: '512x512',
             type: 'image/png'
           }
