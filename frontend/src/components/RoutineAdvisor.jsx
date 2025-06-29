@@ -12,6 +12,7 @@ const RoutineAdvisor = () => {
   });
 
   const [tip, setTip] = useState('');
+  const [feedbackSent, setFeedbackSent] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -19,8 +20,9 @@ const RoutineAdvisor = () => {
   };
 
   const getRoutineTip = async () => {
+    setFeedbackSent(false);
     try {
-      const idToken = await auth.currentUser.getIdToken(); // 🔐 fix: fetch token here
+      const idToken = await auth.currentUser.getIdToken();
       const res = await axios.post(
         'http://127.0.0.1:5000/routine_tip',
         inputs,
@@ -30,6 +32,24 @@ const RoutineAdvisor = () => {
     } catch (err) {
       console.error('Failed to fetch tip', err);
       setTip("⚠️ Failed to get routine tip. Please check inputs.");
+    }
+  };
+
+  const submitFeedback = async (feedback) => {
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      await axios.post(
+        'http://127.0.0.1:5000/submit_tip_feedback',
+        {
+          tip: tip,
+          feedback: feedback,
+          inputs: inputs // 💡 Send input context here
+        },
+        { headers: { Authorization: `Bearer ${idToken}` } }
+      );
+      setFeedbackSent(true);
+    } catch (err) {
+      console.error("Failed to submit feedback", err);
     }
   };
 
@@ -125,7 +145,28 @@ const RoutineAdvisor = () => {
           fontSize: '1rem',
           lineHeight: 1.4
         }}>
-          {tip}
+          <p>{tip}</p>
+
+          {!feedbackSent ? (
+            <div style={{ marginTop: 12, display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => submitFeedback('helpful')}
+                style={feedbackBtnStyle}
+              >
+                👍 Helpful
+              </button>
+              <button
+                onClick={() => submitFeedback('not helpful')}
+                style={{ ...feedbackBtnStyle, backgroundColor: '#e57373' }}
+              >
+                👎 Not Helpful
+              </button>
+            </div>
+          ) : (
+            <p style={{ marginTop: 10, color: '#33691e', fontWeight: 'bold' }}>
+              ✅ Thanks for your feedback!
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -138,6 +179,16 @@ const inputStyle = {
   border: '1px solid #cfd8dc',
   fontSize: '1rem',
   outline: 'none'
+};
+
+const feedbackBtnStyle = {
+  backgroundColor: '#81c784',
+  color: '#fff',
+  border: 'none',
+  padding: '8px 16px',
+  borderRadius: 6,
+  fontWeight: 'bold',
+  cursor: 'pointer'
 };
 
 export default RoutineAdvisor;

@@ -1,0 +1,52 @@
+.companions-hub-wrapper .hub-container {
+  text-align: center;
+  padding: 2rem;
+  color: #ffffff;
+}
+
+.companions-hub-wrapper .hub-subtitle {
+  font-size: 1.2rem;
+  color: #ddd;
+  margin-bottom: 2rem;
+}
+
+.companions-hub-wrapper .companions-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+.companions-hub-wrapper .companion-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid;
+  border-radius: 15px;
+  padding: 1.5rem;
+  width: 250px;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: left;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.companions-hub-wrapper .companion-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.companions-hub-wrapper .companion-card h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.companions-hub-wrapper .companion-card h4 {
+  font-size: 1rem;
+  color: #bbb;
+  margin-bottom: 0.5rem;
+}
+
+.companions-hub-wrapper .companion-card p {
+  font-size: 0.95rem;
+  color: #ddd;
+}

@@ -3,9 +3,8 @@ from flask_cors import CORS, cross_origin
 import tempfile
 import firebase_admin_init
 from datetime import datetime
-
+from ai.bedtime_generator import generate_bedtime_story
 from ai.routine_recommendor import generate_custom_routine_tip
-from ai.routine_optimizer_agent import generate_optimized_routine_tips
 from firebase_admin import auth as firebase_auth, exceptions
 from ml.sleep_model import predict_sleep_score
 from ml.predictor import predict_next_score
@@ -18,7 +17,10 @@ from db.firestore import (
     get_streak, get_user_badges,
     store_voice_journal,
     get_user_routine_history,
-    store_generated_routine, get_latest_generated_routine
+    save_tip_feedback, get_helpful_tips_and_inputs,
+    award_xp, get_xp,
+    get_user_quests, mark_quest_completed,
+    get_user_quests_by_companion  # ✅ NEW
 )
 from ai.stress_detector import detect_stress
 from ai.sentiment_analyzer import analyze_sentiment
@@ -27,9 +29,11 @@ from ai.voice_transcriber import transcribe_audio
 from routes.insights import insights_bp
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
-# 🔐 AUTH
+
+# ------------------ AUTH ------------------ #
+
 def verify_token(req):
     auth_header = req.headers.get('Authorization', None)
     if not auth_header or not auth_header.startswith("Bearer "):
@@ -41,7 +45,7 @@ def verify_token(req):
     except (firebase_auth.InvalidIdTokenError, exceptions.FirebaseError):
         return None
 
-# ================== CORE ANALYSIS ===================
+# ------------------ ANALYSIS ------------------ #
 
 def analyze_sleep_data(data, image):
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
@@ -68,11 +72,11 @@ def analyze_sleep_data(data, image):
         "tips": tips,
         "sentiment": sentiment,
         "emotion": stress_result.get("emotion"),
-        "stress_level_numeric": stress_level_numeric,
+        "stress_level_numeric": stress_result.get("stress_level_numeric"),
         "stress_level_label": stress_result.get("stress_level_label")
     }
 
-# ================== ROUTES ===================
+# ------------------ ROUTES ------------------ #
 
 @app.route('/log', methods=['POST'])
 def log_data():
@@ -88,6 +92,15 @@ def log_data():
     result = analyze_sleep_data(data, image)
     data.update(result)
     store_sleep_log(user_id, data)
+    award_xp(user_id, 25)
+
+    # ✅ Auto quest checks
+    from db.firestore import get_sleep_logs, get_streak
+    if len(get_sleep_logs(user_id)) >= 1:
+        mark_quest_completed(user_id, "log_sleep_once")
+    if get_streak(user_id) >= 3:
+        mark_quest_completed(user_id, "log_3_nights")
+
     return jsonify(result)
 
 @app.route('/analyze', methods=['POST'])
@@ -112,7 +125,23 @@ def predict():
     logs = request.json.get("logs")
     return jsonify({"predicted_score": predict_next_score(logs)})
 
-# ================== REMINDERS ===================
+@app.route('/submit_tip_feedback', methods=['POST'])
+def submit_tip_feedback():
+    user_id = verify_token(request)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    data = request.json
+    tip = data.get("tip")
+    feedback = data.get("feedback")
+    inputs = data.get("inputs", {})
+    if not tip or feedback not in ["helpful", "not helpful"]:
+        return jsonify({"error": "Invalid input"}), 400
+    save_tip_feedback(user_id, tip, feedback, inputs)
+    if feedback == "helpful":
+        award_xp(user_id, 10)
+    return jsonify({"message": "Feedback recorded"})
+
+# ------------------ REMINDERS ------------------ #
 
 @app.route('/set_reminder', methods=['POST'])
 def set_reminder():
@@ -127,7 +156,6 @@ def set_reminder():
     if token:
         send_push_notification(token, "Reminder Set ✅", f"Sleep reminder set for {preferred_time}")
     return jsonify({"message": "Reminder time set successfully."})
-
 @app.route('/get_reminder', methods=['GET'])
 def get_reminder():
     user_id = verify_token(request)
@@ -142,7 +170,7 @@ def get_smart_reminder():
         return jsonify({"error": "Unauthorized"}), 401
     return jsonify({"suggested_time": get_suggested_sleep_time(user_id)})
 
-# ================== PUSH NOTIFICATIONS ===================
+# ------------------ FCM PUSH ------------------ #
 
 @app.route('/store_fcm_token', methods=['POST'])
 def save_fcm_token():
@@ -167,7 +195,7 @@ def trigger_fcm():
     send_push_notification(token, "⏰ Sleep Reminder", "It's time to wind down and sleep well.")
     return jsonify({"message": "Push notification sent!"})
 
-# ================== GAMIFICATION ===================
+# ------------------ GAMIFICATION ------------------ #
 
 @app.route('/get_streak', methods=['GET'])
 def fetch_streak():
@@ -183,7 +211,65 @@ def fetch_badges():
         return jsonify({"error": "Unauthorized"}), 401
     return jsonify({"badges": get_user_badges(user_id)})
 
-# ================== VOICE JOURNAL ===================
+@app.route('/get_xp', methods=['GET'])
+def fetch_xp():
+    user_id = verify_token(request)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    return jsonify({"xp": get_xp(user_id)})
+
+# ------------------ QUEST SYSTEM ------------------ #
+
+@app.route('/get_quests', methods=['GET'])
+def get_quests():
+    user_id = verify_token(request)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    return jsonify({"quests": get_user_quests(user_id)})
+
+@app.route('/get_quests/<companion>', methods=['GET'])
+def get_quests_by_companion(companion):
+    user_id = verify_token(request)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    return jsonify({"quests": get_user_quests_by_companion(user_id, companion)})
+
+@app.route('/complete_quest', methods=['POST'])
+def complete_quest():
+    user_id = verify_token(request)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    data = request.json
+    quest_id = data.get("quest_id")
+    if not quest_id:
+        return jsonify({"error": "Quest ID is required"}), 400
+    success = mark_quest_completed(user_id, quest_id)
+    if not success:
+        return jsonify({"message": "Quest already completed or invalid ID"}), 200
+    return jsonify({"message": f"Quest '{quest_id}' marked as completed and XP awarded."})
+
+@app.route('/api/quest_progress', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def quest_progress():
+    if request.method == 'OPTIONS':
+        return '', 200  # preflight check success
+
+    user_id = verify_token(request)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.json
+    quest_name = data.get("quest")
+
+    if not quest_name:
+        return jsonify({"error": "Missing quest name"}), 400
+
+    success = mark_quest_completed(user_id, quest_name)
+    if not success:
+        return jsonify({"message": "Quest already completed or invalid"}), 200
+    return jsonify({"message": f"Quest '{quest_name}' marked as completed and XP awarded."})
+
+# ------------------ VOICE JOURNAL ------------------ #
 
 @app.route('/voice_journal', methods=['POST'])
 def voice_journal():
@@ -206,6 +292,11 @@ def voice_journal():
         "stress_level": stress_result.get("stress_level_numeric"),
         "stress_label": stress_result.get("stress_level_label")
     })
+    award_xp(user_id, 15)
+
+    # ✅ Auto quest
+    mark_quest_completed(user_id, "complete_voice_journal")
+
     return jsonify({
         "transcript": transcript,
         "sentiment": sentiment,
@@ -214,7 +305,7 @@ def voice_journal():
         "stress_level_label": stress_result.get("stress_level_label")
     })
 
-# ================== ROUTINE AGENT + ROUTINE TIP ===================
+# ------------------ ROUTINE AGENT ------------------ #
 
 @app.route('/optimize_routine_agent', methods=['GET'])
 def optimize_routine_agent():
@@ -222,70 +313,55 @@ def optimize_routine_agent():
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
     history = get_user_routine_history(user_id, limit=10)
-    tips = generate_optimized_routine_tips(history)
+    tips = generate_custom_routine_tip({}, past_feedback=history)
     return jsonify({"tips": tips})
 
-@app.route('/routine_tip', methods=['POST'])  # ✅ RESTORED
+@app.route('/routine_tip', methods=['POST'])
 def routine_tip():
     user_id = verify_token(request)
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
     data = request.json
-    tip = generate_custom_routine_tip(data)
+    feedback = get_helpful_tips_and_inputs(user_id)
+    tip = generate_custom_routine_tip(data, past_feedback=feedback)
     return jsonify({"tip": tip})
 
-@app.route('/generate_routine_from_preferences', methods=['POST'])
-def generate_user_defined_routine():
+# ------------------ STORY / LULLABY ------------------ #
+
+@app.route('/bedtime_content', methods=['GET'])
+def get_bedtime_content():
     user_id = verify_token(request)
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    data = request.json
-    try:
-        activity_blocks = data.get('activity_blocks', [])
+    style = request.args.get("style", "story")
+    age_group = request.args.get("age", "young")
+    theme = request.args.get("theme", "dreams")
+    
+    # ✅ Mark quest complete on story generation
+    mark_quest_completed(user_id, "generate_bedtime_story")
 
-        if not activity_blocks:
-            return jsonify({"error": "No activity blocks provided"}), 400
+    content = generate_bedtime_story(style=style, age_group=age_group, theme=theme)
+    return jsonify({"content": content})
 
-        routine = []
-        for block in activity_blocks:
-            start = block.get("start")
-            end = block.get("end")
-            label = block.get("activity")
-            if not start or not end or not label:
-                return jsonify({"error": "Each block must have start, end, and activity"}), 400
 
-            # Validate time format
-            try:
-                datetime.strptime(start, "%H:%M")
-                datetime.strptime(end, "%H:%M")
-            except ValueError:
-                return jsonify({"error": f"Invalid time format for block: {start} - {end}"}), 400
-
-            routine.append({
-                "time": f"{start} - {end}",
-                "activity": label
-            })
-
-        store_generated_routine(user_id, routine)
-        return jsonify({"routine": routine})
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
-
-@app.route('/load_latest_routine', methods=['GET'])
-def load_latest_routine():
+@app.route('/mark_sleep_healer_used', methods=['POST'])
+def mark_sleep_healer_used():
     user_id = verify_token(request)
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
-    routine = get_latest_generated_routine(user_id)
-    if not routine:
-        return jsonify({"error": "No routine found"}), 404
-    return jsonify({"routine": routine})
 
-# ================== BLUEPRINTS ===================
+    # Mark the use_sleep_healer quest complete
+    success = mark_quest_completed(user_id, "use_sleep_healer")
+    if not success:
+        return jsonify({"message": "Quest already completed or invalid"}), 200
+    return jsonify({"message": "Sleep Healer quest completed and XP awarded!"})
+
+# ------------------ BLUEPRINTS ------------------ #
+
 app.register_blueprint(insights_bp)
 
-# ================== RUN ===================
+# ------------------ START APP ------------------ #
+
 if __name__ == '__main__':
     app.run(debug=True)

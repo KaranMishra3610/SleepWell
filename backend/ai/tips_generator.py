@@ -1,5 +1,3 @@
-# ai/tips_generator.py
-
 import os
 import requests
 from dotenv import load_dotenv
@@ -11,7 +9,7 @@ HF_TOKEN = os.getenv("HF_API_TOKEN")
 headers = {"Authorization": f"Bearer {HF_TOKEN}"}
 
 
-def generate_tips(data):
+def generate_tips(data, past_feedback=None):
     journal = data.get("journal", "").lower()
     mood = data.get("mood", "neutral").lower()
     emotion = data.get("emotion", "unknown").lower()
@@ -19,16 +17,34 @@ def generate_tips(data):
     polarity = sentiment.get("polarity", 0.0)
     sentiment_mood = sentiment.get("mood", "unknown").lower()
 
-    # Enhanced prompt
+    screen_time_after_9 = data.get("screenTime", "")
+    caffeine_time = data.get("caffeineTime", "")
+    workout_time = data.get("workoutTime", "")
+    late_meal = data.get("lateMeal", "")
+
+    feedback_text = ""
+    if past_feedback:
+        examples = []
+        for fb in past_feedback[:3]:
+            tip = fb.get("tip", "")
+            inputs = fb.get("inputs", {})
+            examples.append(
+                f"User inputs: {inputs}\nHelpful tip: {tip}\n"
+            )
+        feedback_text = "\n---\nPreviously effective tips:\n" + "\n".join(examples)
+
     prompt = (
         "You are a friendly and empathetic sleep coach.\n"
-        "Given the user's data below, generate exactly 3 personalized sleep tips.\n"
-        "Be kind but informative. Do not repeat input facts. No intros or summaries.\n"
-        "Make each tip specific to their situation. Mention nightmares or stress if applicable.\n\n"
+        "Given the user's current state, generate exactly 3 personalized sleep tips.\n"
+        "Be kind but specific. Mention nightmares or stress if applicable. No praise or summaries.\n"
         "User Data:\n"
         f"- Hours slept: {data.get('hours_slept', 0)}\n"
-        f"- Screen time: {data.get('screen_time', 0)}\n"
-        f"- Caffeine intake: {data.get('caffeine', 0)}\n"
+        f"- Screen time duration: {data.get('screen_time', 0)}\n"
+        f"- Screen time after 9PM: {screen_time_after_9}\n"
+        f"- Caffeine intake (cups): {data.get('caffeine', 0)}\n"
+        f"- Last caffeine intake time: {caffeine_time}\n"
+        f"- Workout time: {workout_time}\n"
+        f"- Had late meal?: {late_meal}\n"
         f"- Mood: {mood}\n"
         f"- Emotion: {emotion}\n"
         f"- Sentiment: {sentiment_mood} (Polarity: {polarity})\n"
@@ -37,7 +53,15 @@ def generate_tips(data):
     )
 
     try:
-        payload = {"inputs": prompt, "parameters": {"max_new_tokens": 200, "temperature": 0.7}}
+        payload = {
+            "inputs": prompt,
+            "parameters": {
+                "max_new_tokens": 350,
+                "temperature": 0.7,
+                "top_k": 50,
+                "top_p": 0.95
+            }
+        }
         resp = requests.post(HF_API_URL, headers=headers, json=payload, timeout=45)
         resp.raise_for_status()
 
@@ -49,9 +73,7 @@ def generate_tips(data):
     except Exception as e:
         print("HF generate_tips failed:", e)
 
-        # 🔁 Fallback logic (smarter)
         fallback = []
-
         hours = data.get("hours_slept", 0)
         if hours > 9:
             fallback.append("Try to limit sleep to 7–9 hours to avoid grogginess or sleep inertia.")
@@ -64,7 +86,6 @@ def generate_tips(data):
         if data.get("caffeine", 0) > 1:
             fallback.append("Avoid caffeine after 2 PM to prevent it from affecting your sleep.")
 
-        # Journal analysis
         if any(word in journal for word in ["nightmare", "dream", "scared", "horrified", "anxious"]):
             fallback.append("Try calming techniques before bed, like breathing exercises or gentle music.")
 

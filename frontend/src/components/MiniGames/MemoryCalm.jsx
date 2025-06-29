@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './MemoryCalm.css';
 import { memoryItems } from './memoryData';
+import { logQuestProgress } from '../../utils/logQuestProgress';
+
 
 const shuffle = (array) => {
   let shuffled = [...array, ...array];
@@ -16,6 +18,7 @@ const MemoryCalm = () => {
   const [flipped, setFlipped] = useState([]);
   const [disabled, setDisabled] = useState(false);
   const [matches, setMatches] = useState(0);
+  const [completed, setCompleted] = useState(false); // track for quest log
 
   useEffect(() => {
     setCards(shuffle(memoryItems));
@@ -38,7 +41,12 @@ const MemoryCalm = () => {
           setCards(prev => prev.map(c =>
             c.name === a.name ? { ...c, matched: true } : c
           ));
-          setMatches(prev => prev + 1);
+          const newMatchCount = matches + 1;
+          setMatches(newMatchCount);
+          if (newMatchCount === memoryItems.length && !completed) {
+            logQuestProgress("Complete the Memory Calm game");
+            setCompleted(true);
+          }
         } else {
           setCards(prev => prev.map(c =>
             (c.id === a.id || c.id === b.id) ? { ...c, flipped: false } : c

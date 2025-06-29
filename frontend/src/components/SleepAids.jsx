@@ -1,5 +1,6 @@
 // src/components/SleepAids.jsx
 import React, { useState, useEffect } from 'react';
+import { logQuestProgress } from '../utils/logQuestProgress';
 
 const breathingPhases = [
   { label: "Inhale", duration: 4000 },
@@ -15,6 +16,7 @@ const SleepAids = () => {
   const [breathingStep, setBreathingStep] = useState(0);
   const [circleScale, setCircleScale] = useState(1);
   const [breathingActive, setBreathingActive] = useState(false);
+  const [breathingStarted, setBreathingStarted] = useState(false); // ensures quest logs once per session
 
   const toggleMusic = () => {
     if (isPlaying) {
@@ -46,6 +48,10 @@ const SleepAids = () => {
   const startBreathing = () => {
     setBreathingActive(true);
     setBreathingStep(0);
+    if (!breathingStarted) {
+      logQuestProgress("Complete a breathing session");
+      setBreathingStarted(true);
+    }
   };
 
   return (

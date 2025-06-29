@@ -1,0 +1,30 @@
+.xp-container {
+  background: #1c1f2e;
+  padding: 16px;
+  border-radius: 12px;
+  color: #fff;
+  margin-bottom: 24px;
+}
+
+.xp-label {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.xp-bar {
+  background: #333;
+  border-radius: 10px;
+  height: 12px;
+  overflow: hidden;
+}
+
+.xp-fill {
+  background: linear-gradient(90deg, #7fffd4, #00bfff);
+  height: 100%;
+  transition: width 0.5s;
+}
+
+.xp-count {
+  margin-top: 6px;
+  font-size: 14px;
+}

@@ -1,0 +1,68 @@
+.quest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.quest-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 6px solid #888;
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+}
+
+.quest-card:hover {
+  transform: scale(1.02);
+}
+
+.quest-card h3 {
+  font-size: 1.25rem;
+  margin: 0 0 0.3rem 0;
+}
+
+.quest-card p {
+  font-size: 0.95rem;
+  margin: 0;
+  opacity: 0.85;
+}
+
+.quest-footer {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.xp-tag {
+  background-color: #333;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #ffd700;
+  font-weight: bold;
+}
+
+.status {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.status.not-started {
+  background: #555;
+  color: #ddd;
+}
+
+.status.in-progress {
+  background: #2196F3;
+  color: white;
+}
+
+.status.completed {
+  background: #4CAF50;
+  color: white;
+}

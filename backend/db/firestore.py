@@ -23,7 +23,6 @@ def store_sleep_log(user_id, data):
         "timestamp": datetime.utcnow().isoformat()
     }
 
-    # Routine-related fields (store in lowercase for consistency)
     for key in ["wakeUp", "screenTime", "caffeineTime", "workoutTime", "lateMeal"]:
         if key in data:
             log[key.lower()] = data[key]
@@ -74,7 +73,6 @@ def update_streak(user_id):
         return
 
     dates = sorted(list(set(dates)), reverse=True)
-
     streak = 1
     for i in range(1, len(dates)):
         if (dates[i - 1] - dates[i]).days == 1:
@@ -136,7 +134,7 @@ def set_user_sleep_reminder(user_id, sleep_time_str):
     }, merge=True)
 
 def get_user_sleep_reminder(user_id):
-    doc = db.collection('users').document(user_id).get()
+    doc = db.collection("users").document(user_id).get()
     if doc.exists:
         return doc.to_dict().get("preferred_sleep_time", None)
     return None
@@ -204,10 +202,7 @@ def store_voice_journal(user_id, transcript_text, metadata=None):
 # -------------------------
 
 def get_user_routine_history(user_id, limit=10):
-    """
-    Fetch recent routine inputs (screen time, caffeine time, etc.) for AI agent.
-    """
-    entries = db.collection("sleep_logs").document(user_id).collection("entries") \
+    entries = db.collection("sleep_logs").document(user_id).collection('entries') \
         .order_by("timestamp", direction=firestore.Query.DESCENDING).limit(limit).stream()
 
     history = []
@@ -238,3 +233,110 @@ def get_latest_generated_routine(user_id):
     for doc in docs:
         return doc.to_dict().get("routine")
     return None
+
+# -------------------------
+# 🗣 Tip Feedback Loop (Enhanced)
+# -------------------------
+
+def save_tip_feedback(user_id, tip_text, feedback, input_context=None):
+    entry = {
+        "tip": tip_text,
+        "feedback": feedback,
+        "timestamp": firestore.SERVER_TIMESTAMP
+    }
+    if input_context:
+        entry["input_context"] = input_context
+    db.collection("tip_feedback").document(user_id).collection("entries").add(entry)
+
+def get_helpful_tips_and_inputs(user_id, limit=10):
+    docs = db.collection("tip_feedback").document(user_id).collection("entries") \
+        .where("feedback", "==", "helpful") \
+        .order_by("timestamp", direction=firestore.Query.DESCENDING).limit(limit).stream()
+
+    results = []
+    for doc in docs:
+        d = doc.to_dict()
+        tip = d.get("tip")
+        context = d.get("input_context")
+        if tip and context:
+            results.append({
+                "tip": tip,
+                "context": context
+            })
+    return results
+
+# -------------------------
+# 🧠 XP & Quest System
+# -------------------------
+
+def award_xp(user_id, amount):
+    user_ref = db.collection("users").document(user_id)
+    user_ref.set({
+        "xp": firestore.Increment(amount)
+    }, merge=True)
+
+def get_xp(user_id):
+    doc = db.collection("users").document(user_id).get()
+    if doc.exists:
+        return doc.to_dict().get("xp", 0)
+    return 0
+DEFAULT_QUESTS = [
+    {"id": "log_3_nights", "title": "Log sleep 3 nights in a row", "xp": 50, "companion": "tracker"},
+    {"id": "use_sleep_healer", "title": "Use Sleep Healer twice", "xp": 30, "companion": "healer"},
+    {"id": "complete_voice_journal", "title": "Log a voice journal", "xp": 20, "companion": "sage"},
+    {"id": "log_sleep_once", "title": "Log your first sleep", "xp": 10, "companion": "tracker"},
+
+    # ✅ Add this quest for bedtime story
+    {"id": "generate_bedtime_story", "title": "Generate a bedtime story or lullaby", "xp": 15, "companion": "healer"}
+]
+
+
+def mark_quest_completed(user_id, quest_id):
+    quest_ref = db.collection("users").document(user_id).collection("quests").document(quest_id)
+    if quest_ref.get().exists:
+        return False  # Already completed
+
+    quest = next((q for q in DEFAULT_QUESTS if q["id"] == quest_id), None)
+    if not quest:
+        return False
+
+    quest_ref.set({
+        "title": quest["title"],
+        "xp": quest["xp"],
+        "companion": quest.get("companion", "tracker"),
+        "completed_at": firestore.SERVER_TIMESTAMP
+    })
+
+    award_xp(user_id, quest["xp"])
+    return True
+
+
+def get_user_quests(user_id):
+    completed_docs = db.collection("users").document(user_id).collection("quests").stream()
+    completed_ids = set()
+    completed_info = {}
+
+    for doc in completed_docs:
+        data = doc.to_dict()
+        completed_ids.add(doc.id)
+        completed_info[doc.id] = {
+            "completed": True,
+            "title": data.get("title", ""),
+            "xp": data.get("xp", 0),
+            "companion": data.get("companion", "tracker")
+        }
+
+    all_quests = []
+    for q in DEFAULT_QUESTS:
+        quest_id = q["id"]
+        quest_data = {
+            **q,
+            "completed": quest_id in completed_ids
+        }
+        all_quests.append(quest_data)
+
+    return all_quests
+
+def get_user_quests_by_companion(user_id, companion):
+    all_quests = get_user_quests(user_id)
+    return [q for q in all_quests if q.get("companion") == companion]
