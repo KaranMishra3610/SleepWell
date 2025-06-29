@@ -9,7 +9,7 @@ requests           # often needed for external APIs or Firebase token validation
 numpy              # used under the hood by pandas/sklearn
 transformers
 torch
-os
+python-3.10.12
 datetime
 dotenv
 random
