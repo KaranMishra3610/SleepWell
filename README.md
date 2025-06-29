@@ -88,11 +88,6 @@ Feature/Layer               Tools & Technologies Used
 
 ---
 
-## ⚠ Deployment Note
-
->  ‍  This was a hackathon solo project. Because of falling ill at the final stretch:
-> -   The backend is not deployed yet, although works flawlessly locally
-> -   The deployed frontend on Netlify is not the final version — CSS/UI tweaks will be visible in the final demo video
 
 Live frontend (not final):
   [https://effulgent-sundae-e24053.netlify.app](https://effulgent-sundae-e24053.netlify.app)
