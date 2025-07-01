@@ -1,12 +1,12 @@
-import os
-import requests
-from dotenv import load_dotenv
+from transformers import pipeline
+import torch
 
-load_dotenv()
-HF_API_URL = "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta"
-HF_TOKEN = os.getenv("HF_API_TOKEN")
-headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-
+# Load local model (flan-t5-base)
+generator = pipeline(
+    "text2text-generation",
+    model="google/flan-t5-base",
+    device=0 if torch.cuda.is_available() else -1
+)
 
 def generate_custom_routine_tip(data, past_feedback=None):
     for key in ["wakeUp", "screenTime", "caffeineTime", "workoutTime", "lateMeal"]:
@@ -21,12 +21,10 @@ def generate_custom_routine_tip(data, past_feedback=None):
     feedback_text = ""
     if past_feedback:
         examples = []
-        for fb in past_feedback[:3]:  # Limit to 3 examples
+        for fb in past_feedback[:3]:
             tip = fb.get("tip", "")
             inputs = fb.get("inputs", {})
-            examples.append(
-                f"Inputs: {inputs}\nHelpful Tip: {tip}\n"
-            )
+            examples.append(f"Inputs: {inputs}\nHelpful Tip: {tip}\n")
         feedback_text = "\n---\nPrevious helpful tips:\n" + "\n".join(examples)
 
     prompt = (
@@ -45,24 +43,13 @@ def generate_custom_routine_tip(data, past_feedback=None):
     )
 
     try:
-        payload = {
-            "inputs": prompt,
-            "parameters": {
-                "max_new_tokens": 250,
-                "temperature": 0.7,
-                "top_p": 0.9
-            }
-        }
-        resp = requests.post(HF_API_URL, headers=headers, json=payload, timeout=45)
-        resp.raise_for_status()
-
-        output = resp.json()[0]["generated_text"]
-        tips_raw = output.split("Tips:")[-1]
+        result = generator(prompt, max_new_tokens=250)[0]["generated_text"]
+        tips_raw = result.split("Tips:")[-1]
         tips = [line.strip("•- ").strip() for line in tips_raw.split("\n") if len(line.strip()) > 10]
         return "\n".join(tips[:3]) if tips else "No major issues found in current routine."
 
     except Exception as e:
-        print("⚠️ LLM generation failed:", e)
+        print("⚠️ Local LLM generation failed:", e)
 
         fallback = []
         try:
