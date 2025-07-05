@@ -37,7 +37,7 @@ Every companion assists you in mastering a unique facet of sleep health:
 > Guides your inner self through thoughtful journaling and personalized feedback.
 
 -   Sleep Logger – Log hours slept, caffeine/screen time, dreams  
--  Sleep Score Prediction – Custom AI model estimates your sleep quality based on details like hours slept, caffeine intake, and other habits.
+-   Sleep Score Prediction – Custom AI model estimates your sleep quality based on details like hours slept, caffeine intake, and other habits.
 -   Comparative Insights – Examine how your routines(specifically caffeine , screen time) impact your sleep
 -   Routine Advisor – Get personalized advice powered by a smart language AI (runs via Hugging Face)
 -   Feedback to Insights - Give Feedback to the suggestions given by the Routine Advisor for reinforcement learning.
@@ -67,7 +67,7 @@ Every companion assists you in mastering a unique facet of sleep health:
 
 Feature/Layer               Tools & Technologies Used 
 
-- Frontend                React, Vite, Firebase Auth, HTML5 MediaRecorder, CSS3 
+- Frontend                React, Vite, Firebase Auth, CSS3 
 - Backend                 Flask, Firestore (Firebase DB), Firebase Admin SDK, Hugging Face Transformers 
 - Push Notifications      Firebase Cloud Messaging (FCM) *(partially integrated)* 
 - Image Processing        OpenCV for webcam image capture and preprocessing 
@@ -75,7 +75,6 @@ Feature/Layer               Tools & Technologies Used
 - Sentiment Analysis      Hugging Face transformers (on journal entries) 
 - Sleep Score Prediction  Custom ML model that combines mood, journal sentiment, webcam emotion 
 - Routine Tip Generation  Hugging Face LLM (transformers-based, uses prompt + user routine data) 
-- Voice Recorder UI       MediaRecorder API for local audio capture in browser 
 - Deployment              Frontend hosted via Netlify *(not latest version; final in demo video)* |
 - Authentication          Firebase Authentication (email/password) 
 - Token Handling          Firebase ID Token (Bearer auth for protected backend routes) 
@@ -93,70 +92,53 @@ Live frontend (not final):
 
 ##   Run Locally
 ###  Frontend
-git clone https:/KaranMishra3610/github.com//sleepwell.git
-cd frontend
-npm install
+git clone https:/KaranMishra3610/github.com//sleepwell.git  
+cd frontend  
+npm install  
 npm run dev
 
 ###  Backend
-cd backend
-pip install -r requirements.txt
+cd backend  
+pip install -r requirements.txt  
 python app.py
 
-You’ll also need:
--- Firebase service account key
-
--- Firebase project for Auth, FCM, Firestore
-
--- Hugging Face API key (for LLM-based tips)
-
--- Python packages: Whisper, OpenCV, transformers
+You’ll also need:  
+-- Firebase service account key  
+-- Firebase project for Auth, FCM, Firestore  
+-- Hugging Face API key (for LLM-based tips)  
+-- Python packages: OpenCV, transformers  
 
 ---
 
 ## Future Scope
-This was just the beginning. Here's what could be added next:
--- Backend Deployment with live endpoints
-
--- Final UI Enhancements – animations, transitions
-
--- More Mini-Games – rhythm-based or calming puzzles
-
--- PWA Support – installable mobile app with vibration/audio
-
--- LLM Companion Dialogues – emotional support through smart conversations
+This was just the beginning. Here's what could be added next:  
+-- Backend Deployment with live endpoints  
+-- Final UI Enhancements – animations, transitions  
+-- More Mini-Games – rhythm-based or calming puzzles  
+-- PWA Support – installable mobile app with vibration/audio  
+-- LLM Companion Dialogues – emotional support through smart conversations  
 
 ---
 
 ## Learnings
--- This individual project challenged me to merge bleeding-edge tech with emotional UX design within real-world limitations. Here are some takeaways:
+-- This individual project challenged me to merge bleeding-edge tech with emotional UX design within real-world limitations. Here are some takeaways:  
 
--- Full-Stack Product Thinking – Architecting a wellness app from ground up, start to finish
-
--- ML + UX Integration – Mapping ML predictions to actual user interactions and feedback
-
--- Natural Language Prompt Engineering – Engineered prompts that provide actionable recommendations from LLMs
-
--- Whisper AI Integration – Applied Whisper locally to transcribe voice input for journaling
-
--- Webcam-Based Emotion Detection – Recorded real-time emotional context with OpenCV + pretrained models
-
--- Sentiment & Mood Modeling – Examined journal entries and mood through various NLP techniques
-
--- Firebase Auth & Secure Token Handling – Implemented secure backend routes with ID token verification
-
--- XP & Quest Systems – Built game-inspired systems that monitor user behavior and activity
-
--- State Management & UI Feedback Loops – Managed async data flows between backend, ML, and frontend layers
-
--- Rapid Solo Prototyping – Had to provide a full-featured experience under a time constraint and while ill
+-- Full-Stack Product Thinking – Architecting a wellness app from ground up, start to finish  
+-- ML + UX Integration – Mapping ML predictions to actual user interactions and feedback  
+-- Natural Language Prompt Engineering – Engineered prompts that provide actionable recommendations from LLMs  
+-- Webcam-Based Emotion Detection – Recorded real-time emotional context with OpenCV + pretrained models  
+-- Sentiment & Mood Modeling – Examined journal entries and mood through various NLP techniques  
+-- Firebase Auth & Secure Token Handling – Implemented secure backend routes with ID token verification  
+-- XP & Quest Systems – Built game-inspired systems that monitor user behavior and activity  
+-- State Management & UI Feedback Loops – Managed async data flows between backend, ML, and frontend layers  
+-- Rapid Solo Prototyping – Had to provide a full-featured experience under a time constraint and while ill  
 
 -- This project wasn't merely about creating features — it was about crafting a wellness experience that feels fun, individual, and transformative.
 
 ---
 
 ## Built With Heart
- ‍  Solo Developer Project
-Created with curiosity, care,sleep deprivation and a little caffeine.
+ ‍  Solo Developer Project  
+Created with curiosity, care, sleep deprivation and a little caffeine.
 
-SleepWell — Because the search for good sleep should be an adventure. ✨
+**SleepWell — Because the search for good sleep should be an adventure. ✨**
