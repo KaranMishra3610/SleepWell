@@ -99,7 +99,7 @@ Every companion assists you in mastering a unique facet of sleep health:
 | Token Handling        | Firebase ID Token (Bearer auth for protected backend routes)  |
 | Quests & XP Engine    | Firestore-based XP tracking, companion quests, badge system   |
 
-> All AI/ML components (emotion detection, sentiment analysis, score prediction) are computed locally, no external servers required except for optional Hugging Face inference.
+> All AI/ML components (emotion detection, sentiment analysis, score prediction) are computed locally, no external servers required except for routine advisor Hugging Face inference(in main branch).
 
 ---
 
