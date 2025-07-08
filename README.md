@@ -10,9 +10,9 @@ Welcome to *SleepWell*, a solo-developed system where all AI runs locally, offer
 
 - **SleepWell** is a solo-built, full-stack wellness experience that turns sleep improvement into a magical adventure — complete with quests, XP, calming rituals, bedtime stories, and AI insights.
 
-- **Local AI-first: All core ML** — including webcam emotion recognition (OpenCV + DeepFace), journal sentiment analysis (Hugging Face), and a custom sleep score model — runs fully offline in both branches, ensuring privacy and responsiveness. Only the routine advisor LLM differs between branches (local vs Hugging Face API).
+- **Local AI-first: All core ML**  including webcam emotion recognition (OpenCV + DeepFace), journal sentiment analysis (Hugging Face), and a custom sleep score model — runs fully offline in both branches, ensuring privacy and responsiveness. Only the routine advisor LLM differs between branches (local vs Hugging Face API).
 
-- **LLM-Powered Routine Advisor**: Get personalized advice powered by a smart language AI (locally-run FLAN-T5 in local branch, Hugging Face API in main branch)
+- **LLM-Powered Routine Advisor**: Get personalized tips from a smart language AI (Hugging Face API in main branch, local FLAN-T5 in offline branch)
 
 - **Gamified Companions**: Choose between four mystical guides — The Sage, The Knight, The Healer, and The Tracker — each unlocking unique quests, habit tracking, breathing tools, calming games, and reflective journaling.
 
@@ -22,7 +22,7 @@ Welcome to *SleepWell*, a solo-developed system where all AI runs locally, offer
 
 ## Core Gameplay: Quests, XP & Growth
 
-SleepWell isn't simply logging your sleep — Built to motivate through quests, XP, and rewards that improve sleep habits.
+SleepWell isn’t just a sleep tracker — it’s built to motivate through quests, XP, and habit-reinforcing rewards.
 
 - ️ Companion Quests: Each companion provides you with distinct sleep-related challenges  
 - XP System: Quest completion rewards you with XP and allows you to level up  
@@ -47,7 +47,7 @@ Every companion assists you in mastering a unique facet of sleep health:
 - Sleep Score Graphs – Visualizes sleep trends based on your logs  
 - Streak Counter – Monitors how frequently you stick to good habits  
 - Badge System – Gets achievements for consistency and development  
-- Emotion Pie Chart – A pie chart showing the emotion distribution, analyzed through the user's journal entry done at The Sage.
+- Emotion Pie Chart – Visualizes emotional trends from the user’s journal entries, powered by The Sage’s insights.
 
 ---
 
@@ -99,7 +99,7 @@ Every companion assists you in mastering a unique facet of sleep health:
 | Token Handling        | Firebase ID Token (Bearer auth for protected backend routes)  |
 | Quests & XP Engine    | Firestore-based XP tracking, companion quests, badge system   |
 
-> All AI/ML components (emotion detection, sentiment analysis, score prediction) are computed locally, no external servers required except for routine advisor Hugging Face inference(in main branch).
+> All AI/ML components (emotion detection, sentiment analysis, score prediction) are computed locally — no external servers required, except for the Routine Advisor in the main branch which uses Hugging Face inference.
 
 ---
 
