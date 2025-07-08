@@ -112,7 +112,7 @@ Every companion assists you in mastering a unique facet of sleep health:
 ## Run Locally
 
 ### Frontend
-git clone https:/KaranMishra3610/github.com//sleepwell.git  
+git clone [https:/KaranMishra3610/github.com//sleepwell.git](https://github.com/KaranMishra3610/SleepWell.git)  
 cd frontend  
 npm install  
 npm run dev
