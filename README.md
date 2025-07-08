@@ -12,7 +12,7 @@ Welcome to *SleepWell*, a solo-developed system where all AI runs locally, offer
 
 - **Local AI-first: All core ML** — including webcam emotion recognition (OpenCV + DeepFace), journal sentiment analysis (Hugging Face), and a custom sleep score model — runs fully offline in both branches, ensuring privacy and responsiveness. Only the routine advisor LLM differs between branches (local vs Hugging Face API).
 
-- **LLM-Powered Routine Advisor**: A locally-run FLAN-T5 generates personalized tips from your habits — with a clever fallback engine using rule-based logic to gracefully handle hallucinations or repetition.
+- **LLM-Powered Routine Advisor**: Get personalized advice powered by a smart language AI (locally-run FLAN-T5 in local branch, Hugging Face API in main branch)
 
 - **Gamified Companions**: Choose between four mystical guides — The Sage, The Knight, The Healer, and The Tracker — each unlocking unique quests, habit tracking, breathing tools, calming games, and reflective journaling.
 
@@ -118,37 +118,37 @@ pip install -r requirements.txt
 python app.py
 
 You’ll also need:  
--- Firebase service account key  
--- Firebase project for Auth, FCM, Firestore  
--- Hugging Face API key (for LLM-based tips)  
--- Python packages: OpenCV, transformers  
+- Firebase service account key  
+- Firebase project for Auth, FCM, Firestore  
+- Hugging Face API key (for LLM-based tips)  
+- Python packages: OpenCV, transformers  
 
 ---
 
 ## Future Scope
 This was just the beginning. Here's what could be added next:  
--- Backend Deployment with live endpoints  
--- Final UI Enhancements – animations, transitions  
--- More Mini-Games – rhythm-based or calming puzzles  
--- PWA Support – installable mobile app with vibration/audio  
--- LLM Companion Dialogues – emotional support through smart conversations  
+- Backend Deployment with live endpoints  
+- Final UI Enhancements – animations, transitions  
+- More Mini-Games – rhythm-based or calming puzzles  
+- PWA Support – installable mobile app with vibration/audio  
+- LLM Companion Dialogues – emotional support through smart conversations  
 
 ---
 
 ## Learnings
 -- This individual project challenged me to merge bleeding-edge tech with emotional UX design within real-world limitations. Here are some takeaways:  
 
--- Full-Stack Product Thinking – Architecting a wellness app from ground up, start to finish  
--- ML + UX Integration – Mapping ML predictions to actual user interactions and feedback  
--- Natural Language Prompt Engineering – Engineered prompts that provide actionable recommendations from LLMs  
--- Webcam-Based Emotion Detection – Recorded real-time emotional context with OpenCV + pretrained models  
--- Sentiment & Mood Modeling – Examined journal entries and mood through various NLP techniques  
--- Firebase Auth & Secure Token Handling – Implemented secure backend routes with ID token verification  
--- XP & Quest Systems – Built game-inspired systems that monitor user behavior and activity  
--- State Management & UI Feedback Loops – Managed async data flows between backend, ML, and frontend layers  
--- Rapid Solo Prototyping – Had to provide a full-featured experience under a time constraint and while ill  
+- Full-Stack Product Thinking – Architecting a wellness app from ground up, start to finish  
+- ML + UX Integration – Mapping ML predictions to actual user interactions and feedback  
+- Natural Language Prompt Engineering – Engineered prompts that provide actionable recommendations from LLMs  
+- Webcam-Based Emotion Detection – Recorded real-time emotional context with OpenCV + pretrained models  
+- Sentiment & Mood Modeling – Examined journal entries and mood through various NLP techniques  
+- Firebase Auth & Secure Token Handling – Implemented secure backend routes with ID token verification  
+- XP & Quest Systems – Built game-inspired systems that monitor user behavior and activity  
+- State Management & UI Feedback Loops – Managed async data flows between backend, ML, and frontend layers  
+- Rapid Solo Prototyping – Had to provide a full-featured experience under a time constraint and while ill  
 
--- This project wasn't merely about creating features — it was about crafting a wellness experience that feels fun, individual, and transformative.
+- This project wasn't merely about creating features — it was about crafting a wellness experience that feels fun, individual, and transformative.
 
 ---
 
