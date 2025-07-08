@@ -10,7 +10,7 @@ Welcome to *SleepWell*, a solo-developed system where all AI runs locally, offer
 
 - **SleepWell** is a solo-built, full-stack wellness experience that turns sleep improvement into a magical adventure — complete with quests, XP, calming rituals, bedtime stories, and AI insights.
 
-- **Local AI-first**: All ML — including webcam emotion recognition (via OpenCV + DeepFace), journal sentiment analysis (HuggingFace), and a custom sleep score model — runs entirely offline, ensuring privacy and responsiveness.
+- **Local AI-first**: All ML — including webcam emotion recognition (via OpenCV + DeepFace), journal sentiment analysis (HuggingFace), and a custom sleep score model — runs entirely offline, ensuring privacy and responsiveness.(in local branch)
 
 - **LLM-Powered Routine Advisor**: A locally-run FLAN-T5 generates personalized tips from your habits — with a clever fallback engine using rule-based logic to gracefully handle hallucinations or repetition.
 
