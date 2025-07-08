@@ -1,8 +1,8 @@
-#   SleepWell: Become the Dreamy One  
+# SleepWell: Become the Dreamy One  
 
 Welcome to *SleepWell*, a solo-developed system where all AI runs locally, offering a gamified well-being experience where you become **The Dreamy One** — a mindful sleeper assisted by four mystical companions.
 
->   Explore. Reflect. Rest. Repeat.
+> Explore. Reflect. Rest. Repeat.
 
 ---
 
@@ -20,97 +20,103 @@ Welcome to *SleepWell*, a solo-developed system where all AI runs locally, offer
 
 ---
 
-##   Core Gameplay: Quests, XP & Growth
+## Core Gameplay: Quests, XP & Growth
 
 SleepWell isn't simply logging your sleep — Built to motivate through quests, XP, and rewards that improve sleep habits.
 
--  ️ Companion Quests: Each companion provides you with distinct sleep-related challenges
--   XP System: Quest completion rewards you with XP and allows you to level up 
--   Badges & Streaks: Develop habit and be rewarded  
--   Adaptive Insights: Understand which habits contribute to or detract from your sleep  
+- ️ Companion Quests: Each companion provides you with distinct sleep-related challenges  
+- XP System: Quest completion rewards you with XP and allows you to level up  
+- Badges & Streaks: Develop habit and be rewarded  
+- Adaptive Insights: Understand which habits contribute to or detract from your sleep  
+
+<br>
 
 > Evolve wiser with The Sage, stronger with The Knight, calmer with The Healer, and more aware with The Tracker.
 
 ---
 
-##  Choose Your Magical Companion
+## Choose Your Magical Companion
 
 Every companion assists you in mastering a unique facet of sleep health:
 
 ---
 
-###   The Tracker – Master of Patterns
+### The Tracker – Master of Patterns
 > Assists in staying on top and marking progress in the long-term.
 
--   Sleep Score Graphs – Visualizes sleep trends based on your logs
--   Streak Counter – Monitors how frequently you stick to good habits
--   Badge System – Gets achievements for consistency and development
--   Emotion Pie Chart - A Pie Chart showing the emotion distribution. Emotion is analysed through the user's journal entry done at the sage. 
+- Sleep Score Graphs – Visualizes sleep trends based on your logs  
+- Streak Counter – Monitors how frequently you stick to good habits  
+- Badge System – Gets achievements for consistency and development  
+- Emotion Pie Chart – A pie chart showing the emotion distribution, analyzed through the user's journal entry done at The Sage.
+
 ---
 
-###   The Sage – Keeper of Reflection  
+### The Sage – Keeper of Reflection  
 > Guides your inner self through thoughtful journaling and personalized feedback.
 
--   Sleep Logger – Log hours slept, caffeine/screen time, dreams  
--   Sleep Score Prediction – Custom AI model estimates your sleep quality based on details like hours slept, caffeine intake, and other habits.
--   Comparative Insights – Examine how your routines(specifically caffeine , screen time) impact your sleep
--   Routine Advisor – Get personalized advice powered by a smart language AI (runs via Hugging Face)
--   Feedback to Insights - Give Feedback to the suggestions given by the Routine Advisor for reinforcement learning.
--   Sentiment and Emotion analysis - Sentiment analysis done through HuggingFace Models and Webcam emotion recognition using DeepFace. 
+- Sleep Logger – Log hours slept, caffeine/screen time, dreams  
+- Sleep Score Prediction – Custom AI model estimates your sleep quality based on details like hours slept, caffeine intake, and other habits  
+- Comparative Insights – Examine how your routines (specifically caffeine, screen time) impact your sleep  
+- Routine Advisor – Get personalized advice powered by a smart language AI (runs via Hugging Face)  
+- Feedback to Insights – Provide feedback to suggestions given by the Routine Advisor for reinforcement learning  
+- Sentiment and Emotion Analysis – Sentiment analysis done through Hugging Face models and webcam emotion recognition using DeepFace
+
 ---
 
-###  ️The Knight – Guardian of Ritual
+### The Knight – Guardian of Ritual  
 > Assists you in protecting your bedtime and establishing solid nighttime routines.
 
--   Sleep Reminders – Set bedtime reminders
--  ️ Supports Global Quest System – Finish rituals to earn XP
--   Level-Up Engine – XP from every companion assists in your growth
+- Sleep Reminders – Set bedtime reminders  
+- Supports Global Quest System – Finish rituals to earn XP  
+- Level-Up Engine – XP from every companion assists in your growth  
 
 ---
 
-###  The Healer – Bringer of Calm
+### The Healer – Bringer of Calm  
 > Assists in helping you relax slowly and slide into serene sleep.
 
--  ️ Breathing Exercises – Unwind with guided breathing
--   Calm Sounds - Calming Sounds to help the user relax.
--   AI Bedtime Generator – Story or lullaby based on **age group **,**theme**
--   Memory Calm Game – Match relaxing pairs to soothe the mind
+- Breathing Exercises – Unwind with guided breathing  
+- Calm Sounds – Calming sounds to help the user relax  
+- AI Bedtime Generator – Story or lullaby based on **age group** and **theme**  
+- Memory Calm Game – Match relaxing pairs to soothe the mind  
 
 ---
 
-##  Tech Stack
+## Tech Stack
 
-Feature/Layer               Tools & Technologies Used 
+| Feature/Layer          | Tools & Technologies Used                                      |
+|-----------------------|---------------------------------------------------------------|
+| Frontend              | React, Vite, Firebase Auth, CSS3                              |
+| Backend               | Flask, Firestore (Firebase DB), Firebase Admin SDK, Hugging Face Transformers |
+| Push Notifications    | Firebase Cloud Messaging (FCM) *(partially integrated)*       |
+| Image Processing      | OpenCV for webcam image capture and preprocessing             |
+| Emotion Detection     | Pretrained facial emotion classifier model (via OpenCV input) |
+| Sentiment Analysis    | Hugging Face transformers (on journal entries)                |
+| Sleep Score Prediction| Custom ML model combining mood, journal sentiment, webcam emotion |
+| Routine Tip Generation| Zephyr-7B (Hugging Face API main branch) or FLAN-T5 (local)   |
+| Deployment            | Frontend hosted via Netlify *(not latest version; final in demo video)* |
+| Authentication        | Firebase Authentication (email/password)                      |
+| Token Handling        | Firebase ID Token (Bearer auth for protected backend routes)  |
+| Quests & XP Engine    | Firestore-based XP tracking, companion quests, badge system   |
 
-- Frontend                React, Vite, Firebase Auth, CSS3 
-- Backend                 Flask, Firestore (Firebase DB), Firebase Admin SDK, Hugging Face Transformers 
-- Push Notifications      Firebase Cloud Messaging (FCM) *(partially integrated)* 
-- Image Processing        OpenCV for webcam image capture and preprocessing 
-- Emotion Detection       Pretrained facial emotion classifier model (via OpenCV input) 
-- Sentiment Analysis      Hugging Face transformers (on journal entries) 
-- Sleep Score Prediction  Custom ML model that combines mood, journal sentiment, webcam emotion 
-- Routine Tip Generation   Zephyr-7B (via Hugging Face API in main branch) or FLAN-T5 (local model in local branch) — generates personalized advice based on sleep habits and past feedback.
-- Deployment              Frontend hosted via Netlify *(not latest version; final in demo video)* |
-- Authentication          Firebase Authentication (email/password) 
-- Token Handling          Firebase ID Token (Bearer auth for protected backend routes) 
-- Quests & XP Engine      Firestore-based XP tracking, companion quests, badge system 
-
->  All AI/ML components ( emotion detection, sentiment analysis, score prediction) are computed locally, no external servers required except for optional Hugging Face inference.
-
----
-
-
-Live frontend (not final):
-  [https://effulgent-sundae-e24053.netlify.app](https://effulgent-sundae-e24053.netlify.app)
+> All AI/ML components (emotion detection, sentiment analysis, score prediction) are computed locally, no external servers required except for optional Hugging Face inference.
 
 ---
 
-##   Run Locally
-###  Frontend
+## Live Frontend (not final):
+
+[https://effulgent-sundae-e24053.netlify.app](https://effulgent-sundae-e24053.netlify.app)
+
+---
+
+## Run Locally
+
+### Frontend
 git clone https:/KaranMishra3610/github.com//sleepwell.git  
 cd frontend  
 npm install  
 npm run dev
+
 
 ###  Backend
 cd backend  
