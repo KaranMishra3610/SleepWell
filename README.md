@@ -10,7 +10,7 @@ Welcome to *SleepWell*, a solo-developed system where all AI runs locally, offer
 
 - **SleepWell** is a solo-built, full-stack wellness experience that turns sleep improvement into a magical adventure — complete with quests, XP, calming rituals, bedtime stories, and AI insights.
 
-- **Local AI-first**: All ML — including webcam emotion recognition (via OpenCV + DeepFace), journal sentiment analysis (HuggingFace), and a custom sleep score model — runs entirely offline, ensuring privacy and responsiveness.(in local branch)
+- **Local AI-first: All core ML** — including webcam emotion recognition (OpenCV + DeepFace), journal sentiment analysis (Hugging Face), and a custom sleep score model — runs fully offline in both branches, ensuring privacy and responsiveness. Only the routine advisor LLM differs between branches (local vs Hugging Face API).
 
 - **LLM-Powered Routine Advisor**: A locally-run FLAN-T5 generates personalized tips from your habits — with a clever fallback engine using rule-based logic to gracefully handle hallucinations or repetition.
 
@@ -89,7 +89,7 @@ Feature/Layer               Tools & Technologies Used
 - Emotion Detection       Pretrained facial emotion classifier model (via OpenCV input) 
 - Sentiment Analysis      Hugging Face transformers (on journal entries) 
 - Sleep Score Prediction  Custom ML model that combines mood, journal sentiment, webcam emotion 
-- Routine Tip Generation  Hugging Face LLM (transformers-based, uses prompt + user routine data) 
+- Routine Tip Generation   Zephyr-7B (via Hugging Face API in main branch) or FLAN-T5 (local model in local branch) — generates personalized advice based on sleep habits and past feedback.
 - Deployment              Frontend hosted via Netlify *(not latest version; final in demo video)* |
 - Authentication          Firebase Authentication (email/password) 
 - Token Handling          Firebase ID Token (Bearer auth for protected backend routes) 
