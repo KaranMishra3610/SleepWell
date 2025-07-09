@@ -108,7 +108,14 @@ Every companion assists you in mastering a unique facet of sleep health:
 [https://effulgent-sundae-e24053.netlify.app](https://effulgent-sundae-e24053.netlify.app)
 
 ---
+## ⚠️ Judge Setup Note (Important)
 
+Due to the use of local AI models and specific environment requirements, the backend may not run immediately without setup:
+
+- Requires **Python 3.11.8** (to support certain model dependencies)
+- Use of a **virtual environment is strongly recommended**
+
+---
 ## Run Locally
 
 ### Frontend
@@ -158,6 +165,9 @@ This was just the beginning. Here's what could be added next:
 
 ---
 
+🎥 [Demo Video](https://www.youtube.com/watch?v=SEIdDIDyq8E&t=1s)  
+🌐 [Live Frontend (limited)](https://effulgent-sundae-e24053.netlify.app)
+---
 ## Built With Heart
  ‍  Solo Developer Project  
 Created with curiosity, care, sleep deprivation and a little caffeine.
